@@ -1,11 +1,10 @@
 const Product = require('../models/Product');
 
-
 // Get all products with pagination
 exports.getProducts = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; // current page
-    const limit = parseInt(req.query.limit) || 10; // products per page
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
     const products = await Product.find().skip(skip).limit(limit);
@@ -23,7 +22,7 @@ exports.getProducts = async (req, res) => {
   }
 };
 
-// Get all products
+// Get all products without pagination
 exports.getAllProducts = async (req, res) => {
   try {
     const products = await Product.find();
@@ -33,6 +32,7 @@ exports.getAllProducts = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 // Get product by ID
 exports.getProductById = async (req, res) => {
   try {
@@ -48,7 +48,7 @@ exports.getProductById = async (req, res) => {
 // Create new product
 exports.createProduct = async (req, res) => {
   try {
-    const { name, price, category, description, image, countInStock, brand } = req.body;
+    const { name, price, category, description, images, countInStock, brand } = req.body;
 
     if (!name || !price || !category) {
       return res.status(400).json({ message: 'Name, price, and category are required' });
@@ -59,9 +59,9 @@ exports.createProduct = async (req, res) => {
       price,
       category,
       description,
-      image,
+      images, // expects an array of image URLs
       countInStock,
-      brand
+      brand,
     });
 
     res.status(201).json(product);
@@ -79,7 +79,8 @@ exports.updateProduct = async (req, res) => {
 
     const updatedData = req.body;
 
-    Object.assign(product, updatedData); // merge updates into product
+    // Ensure you are sending an array of images if updating images
+    Object.assign(product, updatedData);
     const updatedProduct = await product.save();
 
     res.json(updatedProduct);
