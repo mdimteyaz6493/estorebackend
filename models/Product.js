@@ -10,6 +10,10 @@ const productSchema = new mongoose.Schema({
   countInStock: Number,
   rating: Number,
   numReviews: Number,
+  bestseller: {
+    type: Boolean,
+    default: false // Optional: default to false if not specified
+  }
 });
 
 module.exports = mongoose.model('Product', productSchema);

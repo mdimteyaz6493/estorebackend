@@ -48,7 +48,7 @@ exports.getProductById = async (req, res) => {
 // Create new product
 exports.createProduct = async (req, res) => {
   try {
-    const { name, price, category, description, images, countInStock, brand } = req.body;
+    const { name, price, category, description, images, countInStock, brand, bestseller } = req.body;
 
     if (!name || !price || !category) {
       return res.status(400).json({ message: 'Name, price, and category are required' });
@@ -62,6 +62,7 @@ exports.createProduct = async (req, res) => {
       images, // expects an array of image URLs
       countInStock,
       brand,
+      bestseller: bestseller ?? false // fallback to false if not provided
     });
 
     res.status(201).json(product);
@@ -77,12 +78,27 @@ exports.updateProduct = async (req, res) => {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    const updatedData = req.body;
+    const {
+      name,
+      price,
+      category,
+      description,
+      images,
+      countInStock,
+      brand,
+      bestseller
+    } = req.body;
 
-    // Ensure you are sending an array of images if updating images
-    Object.assign(product, updatedData);
+    if (name !== undefined) product.name = name;
+    if (price !== undefined) product.price = price;
+    if (category !== undefined) product.category = category;
+    if (description !== undefined) product.description = description;
+    if (images !== undefined) product.images = images;
+    if (countInStock !== undefined) product.countInStock = countInStock;
+    if (brand !== undefined) product.brand = brand;
+    if (bestseller !== undefined) product.bestseller = bestseller;
+
     const updatedProduct = await product.save();
-
     res.json(updatedProduct);
   } catch (err) {
     console.error('Update product error:', err.message);
