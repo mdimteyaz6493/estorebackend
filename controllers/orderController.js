@@ -168,3 +168,33 @@ exports.cancelOrder = async (req, res) => {
   }
 };
 
+// Delete all orders (Admin only)
+exports.deleteAllOrders = async (req, res) => {
+  try {
+    // Allow only admins to perform this action
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Not authorized to delete all orders' });
+    }
+
+    // Optional: Restore stock for all orders before deletion
+    const allOrders = await Order.find();
+
+    for (const order of allOrders) {
+      if (order.orderStatus !== 'cancelled') {
+        for (const item of order.orderItems) {
+          const product = await Product.findById(item.product);
+          if (product) {
+            product.countInStock += item.qty;
+            await product.save();
+          }
+        }
+      }
+    }
+
+    await Order.deleteMany({});
+    res.json({ message: 'All orders deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting all orders:', err.message);
+    res.status(500).json({ message: 'Server error while deleting all orders' });
+  }
+};

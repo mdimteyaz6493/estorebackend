@@ -5,22 +5,24 @@ const {
   getOrdersByUser,
   getAllOrders,
   updateOrderStatus,
-  getOrderById ,
-  cancelOrder
+  getOrderById,
+  cancelOrder,
+  deleteAllOrders  // <-- Add this import
 } = require('../controllers/orderController');
 
 const { protect, isAdmin } = require('../middlewares/authMiddleware');
 
-
 // 🛒 User routes
 router.post('/', protect, createOrder);
 router.get('/myorders', protect, getOrdersByUser);
+router.get('/:id', protect, getOrderById);
+router.put('/:id/cancel', protect, cancelOrder);
 
 // 🛡️ Admin routes
 router.get('/', protect, isAdmin, getAllOrders);
-router.put('/:id/status', protect, isAdmin, updateOrderStatus); // ✅ Status update route
-router.get('/:id', protect, getOrderById);
+router.put('/:id/status', protect, isAdmin, updateOrderStatus);
 
-router.put('/:id/cancel', protect, cancelOrder);
+// 🧹 Delete all orders (Admin only)
+router.delete('/deleteall', protect, isAdmin, deleteAllOrders); // <-- New route here
 
 module.exports = router;
