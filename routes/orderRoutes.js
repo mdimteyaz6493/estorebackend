@@ -7,8 +7,10 @@ const {
   updateOrderStatus,
   getOrderById,
   cancelOrder,
-  deleteAllOrders  // <-- Add this import
+  deleteAllOrders,
+  generateInvoice
 } = require('../controllers/orderController');
+
 
 const { protect, isAdmin } = require('../middlewares/authMiddleware');
 

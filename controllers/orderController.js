@@ -1,5 +1,7 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const generateInvoicePDF = require('./invoiceGenerator');
+
 
 
 // Create a new order
@@ -196,5 +198,25 @@ exports.deleteAllOrders = async (req, res) => {
   } catch (err) {
     console.error('Error deleting all orders:', err.message);
     res.status(500).json({ message: 'Server error while deleting all orders' });
+  }
+};
+
+
+// ---------------- GENERATE INVOICE ----------------
+exports.generateInvoice = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    // Only admin or order owner
+    if (!req.user.isAdmin && order.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Call utility to generate PDF
+    generateInvoicePDF(order, res);
+  } catch (err) {
+    console.error('Error generating invoice:', err.message);
+    res.status(500).json({ message: 'Server error while generating invoice' });
   }
 };
