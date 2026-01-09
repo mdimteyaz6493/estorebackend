@@ -23,6 +23,8 @@ router.put('/:id/cancel', protect, cancelOrder);
 // 🛡️ Admin routes
 router.get('/', protect, isAdmin, getAllOrders);
 router.put('/:id/status', protect, isAdmin, updateOrderStatus);
+router.get('/:id/invoice', protect, generateInvoice);
+
 
 // 🧹 Delete all orders (Admin only)
 router.delete('/deleteall', protect, isAdmin, deleteAllOrders); // <-- New route here
