@@ -226,34 +226,65 @@ exports.addOrderReview = async (req, res) => {
   try {
     const { rating, comment } = req.body;
 
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate('user', 'name');
 
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
+    if (!order) return res.status(404).json({ message: 'Order not found' });
 
-    // Only order owner can review
-    if (order.user.toString() !== req.user._id.toString()) {
+    if (order.user._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    // Review only after delivery
     if (order.orderStatus !== 'delivered') {
       return res
         .status(400)
         .json({ message: 'Order must be delivered to add review' });
     }
 
+    if (order.customerReview?.rating) {
+      return res.status(400).json({ message: 'Review already submitted' });
+    }
+
+    // Save review in order
     order.customerReview = {
       rating,
       comment,
       reviewedAt: Date.now(),
     };
 
+    // Update products
+    for (const item of order.orderItems) {
+      const product = await Product.findById(item.product);
+
+      if (product) {
+        // Add review to product
+        product.reviews.push({
+          user: req.user._id,
+          name: order.user.name,
+          rating,
+          comment,
+        });
+
+        // Update rating & numReviews
+        const newNumReviews = product.numReviews + 1;
+        const newRating =
+          (product.rating * product.numReviews + rating) / newNumReviews;
+
+        product.numReviews = newNumReviews;
+        product.rating = Number(newRating.toFixed(1));
+
+        // Optional: bestseller logic
+        if (product.rating >= 4.5 && product.numReviews >= 10) {
+          product.bestseller = true;
+        }
+
+        await product.save();
+      }
+    }
+
     await order.save();
 
     res.json({
-      message: 'Review submitted successfully',
+      message: 'Review submitted & product updated with comment',
       review: order.customerReview,
     });
   } catch (err) {
@@ -261,6 +292,7 @@ exports.addOrderReview = async (req, res) => {
     res.status(500).json({ message: 'Server error while adding review' });
   }
 };
+
 
 // ================= ADD COMPLAINT =================
 exports.addOrderComplaint = async (req, res) => {
