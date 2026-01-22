@@ -220,3 +220,82 @@ exports.generateInvoice = async (req, res) => {
     res.status(500).json({ message: 'Server error while generating invoice' });
   }
 };
+
+// ================= ADD / UPDATE REVIEW =================
+exports.addOrderReview = async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Only order owner can review
+    if (order.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Review only after delivery
+    if (order.orderStatus !== 'delivered') {
+      return res
+        .status(400)
+        .json({ message: 'Order must be delivered to add review' });
+    }
+
+    order.customerReview = {
+      rating,
+      comment,
+      reviewedAt: Date.now(),
+    };
+
+    await order.save();
+
+    res.json({
+      message: 'Review submitted successfully',
+      review: order.customerReview,
+    });
+  } catch (err) {
+    console.error('Add review error:', err.message);
+    res.status(500).json({ message: 'Server error while adding review' });
+  }
+};
+
+// ================= ADD COMPLAINT =================
+exports.addOrderComplaint = async (req, res) => {
+  try {
+    const { type, message } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Only order owner can complain
+    if (order.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    order.complaint = {
+      hasComplaint: true,
+      type,
+      message,
+      status: 'open',
+      createdAt: Date.now(),
+    };
+
+    await order.save();
+
+    res.json({
+      message: 'Complaint submitted successfully',
+      complaint: order.complaint,
+    });
+  } catch (err) {
+    console.error('Add complaint error:', err.message);
+    res
+      .status(500)
+      .json({ message: 'Server error while submitting complaint' });
+  }
+};

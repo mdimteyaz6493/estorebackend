@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+
 const {
   createOrder,
   getOrdersByUser,
@@ -8,25 +9,46 @@ const {
   getOrderById,
   cancelOrder,
   deleteAllOrders,
-  generateInvoice
+  generateInvoice,
+  addOrderReview,
+  addOrderComplaint,
 } = require('../controllers/orderController');
-
 
 const { protect, isAdmin } = require('../middlewares/authMiddleware');
 
-// 🛒 User routes
+// ================= USER ROUTES =================
+
+// 🛒 Create order
 router.post('/', protect, createOrder);
+
+// 📦 Get logged-in user's orders
 router.get('/myorders', protect, getOrdersByUser);
+
+// 📄 Get single order
 router.get('/:id', protect, getOrderById);
+
+// ❌ Cancel order
 router.put('/:id/cancel', protect, cancelOrder);
 
-// 🛡️ Admin routes
+// ⭐ Add / Update review (Delivered orders only)
+router.put('/:id/review', protect, addOrderReview);
+
+// ⚠ Raise complaint
+router.put('/:id/complaint', protect, addOrderComplaint);
+
+
+// ================= ADMIN ROUTES =================
+
+// 📊 Get all orders
 router.get('/', protect, isAdmin, getAllOrders);
+
+// 🔄 Update order status
 router.put('/:id/status', protect, isAdmin, updateOrderStatus);
+
+// 🧾 Generate invoice (Admin or Owner handled in controller)
 router.get('/:id/invoice', protect, generateInvoice);
 
-
-// 🧹 Delete all orders (Admin only)
-router.delete('/deleteall', protect, isAdmin, deleteAllOrders); // <-- New route here
+// 🧹 Delete all orders
+router.delete('/deleteall', protect, isAdmin, deleteAllOrders);
 
 module.exports = router;
