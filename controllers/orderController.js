@@ -331,3 +331,42 @@ exports.addOrderComplaint = async (req, res) => {
       .json({ message: 'Server error while submitting complaint' });
   }
 };
+
+// ================= UPDATE COMPLAINT (ADMIN ONLY) =================
+exports.updateOrderComplaint = async (req, res) => {
+  try {
+    const { status, adminResponse } = req.body;
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (!order.complaint?.hasComplaint) {
+      return res.status(400).json({ message: 'No complaint found for this order' });
+    }
+
+    // ✅ Only admin can update complaint
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    order.complaint.status = status;
+    order.complaint.adminResponse = adminResponse;
+
+    if (status === 'resolved') {
+      order.complaint.resolvedAt = Date.now();
+    }
+
+    await order.save();
+
+    res.json({
+      message: 'Complaint updated successfully',
+      complaint: order.complaint,
+    });
+  } catch (err) {
+    console.error('Update complaint error:', err.message);
+    res.status(500).json({ message: 'Server error while updating complaint' });
+  }
+};

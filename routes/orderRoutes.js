@@ -12,6 +12,7 @@ const {
   generateInvoice,
   addOrderReview,
   addOrderComplaint,
+  updateOrderComplaint
 } = require('../controllers/orderController');
 
 const { protect, isAdmin } = require('../middlewares/authMiddleware');
@@ -50,5 +51,8 @@ router.get('/:id/invoice', protect, generateInvoice);
 
 // 🧹 Delete all orders
 router.delete('/deleteall', protect, isAdmin, deleteAllOrders);
+
+// ADMIN – update complaint
+router.put('/:id/complaint/update', protect, isAdmin, updateOrderComplaint);
 
 module.exports = router;
